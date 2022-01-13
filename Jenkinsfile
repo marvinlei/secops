@@ -11,17 +11,17 @@ pipeline {
             remote.host = "34.125.242.201"
             remote.allowAnyHosts = true
 
-            withCredentials([sshUserPrivateKey(credentialsId: 'sshUser', keyFileVariable: 'identity', passphraseVariable: '', usernameVariable: 'userName')]) {
-                remote.user = userName
-                remote.identityFile = identity
-                stage("Placeholder Stage...") {
-                  sshCommand remote: remote, sudo: true, command: 'echo "add your stuff here....."'
-                  sshCommand remote: remote, sudo: true, command: 'echo "some more stuff goes here....."'
+            withCredentials([sshUserPrivateKey(credentialsId: 'sshUser',keyFileVariable: 'identity', passphraseVariable: '',usernameVariable:'userName')]) {
+              remote.user = userName
+              remote.identityFile = identity
+              stage("Enforce with Ansible") {
+                sshCommand remote: remote, sudo: true, command: 'cd /root/secops/ansible && git pull origin'
+                sshCommand remote: remote, sudo: true, command: 'cd /root/secops/ansible && ansible-playbookcompliance.yaml'
               }
-                stage("Scan with InSpec") {
-                  sshCommand remote: remote, sudo: true, command: 'inspec exec /root/linux-baseline/'
+              stage("Scan with InSpec") {
+                sshCommand remote: remote, sudo: true, command: 'inspec exec --no-distinct-exit /root/linux-baseline/'
               }
-            }
+            } 
           }
        }
     }
